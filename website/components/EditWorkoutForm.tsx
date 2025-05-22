@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import WorkoutService from "@/services/WorkoutService";
-import ExerciseService from "@/services/ExerciseService";
+import { WorkoutService } from "@/services/WorkoutService";
+import { ExerciseService } from "@/services/ExerciseService";
 import ExerciseCard from "@/components/ExerciseCard";
 import AddExerciseButton from "@/components/AddExerciseButton";
-import ModalComponent from "@/components/ModalComponent";
+import ModelComponent from "@/components/ModelComponent";
 
 interface Exercise {
     id: string;
@@ -113,15 +113,23 @@ const EditWorkoutForm: React.FC = () => {
     const workoutService = new WorkoutService();
     const exerciseService = new ExerciseService();
 
+    const getWorkoutIdNumber = (): number | undefined => {
+        if (typeof workoutId === "string") return Number(workoutId);
+        if (Array.isArray(workoutId) && workoutId.length > 0) return Number(workoutId[0]);
+        return undefined;
+    };
+
+    const workoutIdNumber = getWorkoutIdNumber();
+
     useEffect(() => {
-        if (workoutId) {
-            workoutService.getWorkoutById(workoutId).then((response) => {
+        if (workoutIdNumber !== undefined && !isNaN(workoutIdNumber)) {
+            workoutService.getWorkoutById(workoutIdNumber).then((response) => {
                 setWorkoutName(response.data.name);
                 setRestTime(response.data.rest);
                 setExercises(response.data.exercises);
             });
         }
-    }, [workoutId]);
+    }, [workoutIdNumber]);
 
     const handleExerciseNameChange = (name: string) => {
         setExerciseName(name);
@@ -138,9 +146,10 @@ const EditWorkoutForm: React.FC = () => {
     };
 
     const updateWorkout = () => {
+        if (workoutIdNumber === undefined || isNaN(workoutIdNumber)) return;
         workoutService
             .updateWorkout(
-                workoutId,
+                workoutIdNumber,
                 workoutName,
                 restTime,
                 exercises.map((e) => e.id)
@@ -153,8 +162,9 @@ const EditWorkoutForm: React.FC = () => {
             setError("Exercise name cannot be empty");
             return;
         }
+        if (workoutIdNumber === undefined || isNaN(workoutIdNumber)) return;
         workoutService
-            .addExercise(workoutId, { name: exerciseName, type: exerciseType }, exerciseGoal)
+            .addExercise(workoutIdNumber, { name: exerciseName, type: exerciseType }, exerciseGoal)
             .then((response) => {
                 setExercises([...exercises, response.data]);
             });
@@ -166,7 +176,8 @@ const EditWorkoutForm: React.FC = () => {
     };
 
     const deleteWorkout = () => {
-        workoutService.deleteWorkout(workoutId).then(() => router.push("/"));
+        if (workoutIdNumber === undefined || isNaN(workoutIdNumber)) return;
+        workoutService.deleteWorkout(workoutIdNumber).then(() => router.push("/"));
     };
 
     const moveItem = (index: number, direction: "up" | "down") => {
@@ -178,8 +189,9 @@ const EditWorkoutForm: React.FC = () => {
     };
 
     const deleteExercise = (exerciseId: number) => {
+        if (workoutIdNumber === undefined || isNaN(workoutIdNumber)) return;
         exerciseService
-            .deleteExerciseFromWorkout(workoutId, exerciseId)
+            .deleteExerciseFromWorkout(workoutIdNumber, exerciseId)
             .then(() => setExercises(exercises.filter((e) => e.id !== exerciseId.toString())))
             .catch((error) => {
                 console.error("Exercise could not be deleted!", error);
@@ -258,7 +270,7 @@ const EditWorkoutForm: React.FC = () => {
                     Delete
                 </button>
             </div>
-            <ModalComponent visible={isModalVisible} onClose={() => setModalVisible(false)}>
+            <ModelComponent visible={isModalVisible} onClose={() => setModalVisible(false)}>
                 <h2 className="text-2xl font-semibold mb-4">Add new exercise</h2>
                 <label className="font-medium">Name</label>
                 <input
@@ -330,7 +342,7 @@ const EditWorkoutForm: React.FC = () => {
                         Create
                     </button>
                 </div>
-            </ModalComponent>
+            </ModelComponent>
         </form>
     );
 };
