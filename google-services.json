@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "868609400102",
+    "project_id": "buildr-8abba",
+    "storage_bucket": "buildr-8abba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:868609400102:android:956bd055a861c2b4fcb5e7",
+        "android_client_info": {
+          "package_name": "com.mobile.Buildr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFftb94iP6x6-GKKuBBB0TXSrJluiphfA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

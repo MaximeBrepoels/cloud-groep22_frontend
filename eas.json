@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 12.5.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "android": {
+        "buildType": "apk",
+        "env": {
+          "EXPO_PUBLIC_API_URL": "https://springboot-backend-a4abcabderbffqga.eastus-01.azurewebsites.net/api"
+        }
+      },
+      "ios": {
+        "simulator": true
+      },
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

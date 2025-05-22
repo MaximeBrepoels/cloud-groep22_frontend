@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "buildr",
+    "slug": "buildr",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "buildr",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "cover"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mobile.Buildr"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "package": "com.mobile.Buildr",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "NOTIFICATIONS",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6c232e95-8353-4c4c-9d0a-669d5d29a3e2"
+      }
+    }
+  }
+}
