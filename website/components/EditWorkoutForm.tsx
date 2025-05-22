@@ -1,0 +1,338 @@
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import WorkoutService from "@/services/WorkoutService";
+import ExerciseService from "@/services/ExerciseService";
+import ExerciseCard from "@/components/ExerciseCard";
+import AddExerciseButton from "@/components/AddExerciseButton";
+import ModalComponent from "@/components/ModalComponent";
+
+interface Exercise {
+    id: string;
+    name: string;
+    rest: string;
+    type: string;
+}
+
+const exerciseNameSuggestions = [
+    // Bodyweight Exercises
+    "Push-up",
+    "Pull-up",
+    "Plank",
+    "Side Plank",
+    "Burpees",
+    "Mountain Climbers",
+    "Lunges",
+    "Jump Squat",
+    "Glute Bridge",
+    "Hollow Hold",
+    "Wall Sit",
+    "Pistol Squat",
+    "Spiderman Push-up",
+    "Archer Push-up",
+    "Clap Push-up",
+    "Bear Crawl",
+    "Bird Dog",
+    "Reverse Lunge",
+    "Bulgarian Split Squat",
+    "Incline Push-up",
+
+    // Barbell Exercises
+    "Bench Press",
+    "Squat",
+    "Deadlift",
+    "Overhead Press",
+    "Barbell Row",
+    "Romanian Deadlift",
+    "Incline Bench Press",
+    "Good Morning",
+    "Sumo Deadlift",
+    "Snatch",
+    "Clean and Jerk",
+    "Front Squat",
+    "Barbell Shrug",
+
+    // Dumbbell Exercises
+    "Dumbbell Curl",
+    "Incline Dumbbell Curl",
+    "Hammer Curl",
+    "Zottman Curl",
+    "Arnold Press",
+    "Seated Dumbbell Press",
+    "Dumbbell Lateral Raise",
+    "Dumbbell Front Raise",
+    "Chest Fly",
+    "Dumbbell Row",
+    "Dumbbell Bench Press",
+    "Dumbbell Pullover",
+    "Goblet Squat",
+    "Single-Arm Dumbbell Press",
+    "Renegade Row",
+    "Dumbbell Romanian Deadlift",
+
+    // Cable Machine Exercises
+    "Cable Chest Press",
+    "Cable Row",
+    "Lat Pulldown",
+    "Tricep Pushdown",
+    "Face Pull",
+    "Cable Kickback",
+    "Cable Lateral Raise",
+    "Cable Front Raise",
+    "Cable Curl",
+    "Cable Fly",
+    "Cable Reverse Fly",
+    "Cable Pull-Through",
+    "Cable Woodchopper",
+
+    // Bench Exercises
+    "Bench Press",
+    "Incline Bench Press",
+    "Dumbbell Bench Press",
+    "Chest Fly",
+    "Tricep Dips",
+    "Step-Up",
+    "Split Squat",
+    "Glute Bridge on Bench",
+    "Hip Thrust on Bench"
+];
+
+const EditWorkoutForm: React.FC = () => {
+    const router = useRouter();
+    const { workoutId } = router.query;
+
+    const [workoutName, setWorkoutName] = useState("");
+    const [restTime, setRestTime] = useState(60);
+    const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [exerciseName, setExerciseName] = useState("");
+    const [exerciseGoal, setExerciseGoal] = useState("POWER");
+    const [exerciseType, setExerciseType] = useState("WEIGHTS");
+    const [error, setError] = useState("");
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+
+    const workoutService = new WorkoutService();
+    const exerciseService = new ExerciseService();
+
+    useEffect(() => {
+        if (workoutId) {
+            workoutService.getWorkoutById(workoutId).then((response) => {
+                setWorkoutName(response.data.name);
+                setRestTime(response.data.rest);
+                setExercises(response.data.exercises);
+            });
+        }
+    }, [workoutId]);
+
+    const handleExerciseNameChange = (name: string) => {
+        setExerciseName(name);
+        setSuggestions(
+            exerciseNameSuggestions.filter((s) =>
+                s.toLowerCase().includes(name.toLowerCase())
+            )
+        );
+    };
+
+    const selectSuggestion = (name: string) => {
+        setExerciseName(name);
+        setSuggestions([]);
+    };
+
+    const updateWorkout = () => {
+        workoutService
+            .updateWorkout(
+                workoutId,
+                workoutName,
+                restTime,
+                exercises.map((e) => e.id)
+            )
+            .then(() => router.push("/"));
+    };
+
+    const createExercise = () => {
+        if (exerciseName.trim() === "") {
+            setError("Exercise name cannot be empty");
+            return;
+        }
+        workoutService
+            .addExercise(workoutId, { name: exerciseName, type: exerciseType }, exerciseGoal)
+            .then((response) => {
+                setExercises([...exercises, response.data]);
+            });
+        setModalVisible(false);
+        setExerciseName("");
+        setExerciseGoal("POWER");
+        setExerciseType("WEIGHTS");
+        setError("");
+    };
+
+    const deleteWorkout = () => {
+        workoutService.deleteWorkout(workoutId).then(() => router.push("/"));
+    };
+
+    const moveItem = (index: number, direction: "up" | "down") => {
+        const newExercises = [...exercises];
+        const [removed] = newExercises.splice(index, 1);
+        const newIndex = direction === "up" ? index - 1 : index + 1;
+        newExercises.splice(newIndex, 0, removed);
+        setExercises(newExercises);
+    };
+
+    const deleteExercise = (exerciseId: number) => {
+        exerciseService
+            .deleteExerciseFromWorkout(workoutId, exerciseId)
+            .then(() => setExercises(exercises.filter((e) => e.id !== exerciseId.toString())))
+            .catch((error) => {
+                console.error("Exercise could not be deleted!", error);
+            });
+    };
+
+    return (
+        <form className="w-full flex flex-col items-start">
+            <label className="font-medium mt-2">Name</label>
+            <input
+                className="w-full p-3 border border-gray-300 rounded mb-2"
+                value={workoutName}
+                onChange={(e) => setWorkoutName(e.target.value)}
+            />
+            <label className="font-medium mt-2">Rest in between exercises</label>
+            <input
+                className="w-full p-3 border border-gray-300 rounded mb-2"
+                type="number"
+                value={restTime}
+                onChange={(e) => setRestTime(Number(e.target.value))}
+            />
+            <label className="font-medium mt-2">Exercises</label>
+            {exercises.map((exercise, index) => (
+                <div key={exercise.id} className="flex items-center w-full mb-4 gap-2">
+                    <ExerciseCard exercise={exercise} workoutId={workoutId} />
+                    <div className="flex flex-col gap-1">
+                        <button
+                            type="button"
+                            className={`p-2 border rounded ${index === 0 ? "opacity-50" : ""}`}
+                            onClick={() => moveItem(index, "up")}
+                            disabled={index === 0}
+                        >
+                            ↑
+                        </button>
+                        <button
+                            type="button"
+                            className={`p-2 border rounded ${index === exercises.length - 1 ? "opacity-50" : ""}`}
+                            onClick={() => moveItem(index, "down")}
+                            disabled={index === exercises.length - 1}
+                        >
+                            ↓
+                        </button>
+                    </div>
+                    <button
+                        type="button"
+                        className="ml-2 text-red-600"
+                        onClick={() => deleteExercise(Number(exercise.id))}
+                    >
+                        ✕
+                    </button>
+                </div>
+            ))}
+            <AddExerciseButton onClick={() => setModalVisible(true)} />
+            <div className="flex gap-4 mt-8 w-full">
+                <button
+                    type="button"
+                    className="flex-1 border border-gray-300 rounded p-3"
+                    onClick={() => router.push("/")}
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    className="flex-1 border border-gray-300 rounded p-3"
+                    onClick={updateWorkout}
+                >
+                    Save
+                </button>
+            </div>
+            <div className="flex w-full justify-center mt-4">
+                <button
+                    type="button"
+                    className="text-red-600"
+                    onClick={deleteWorkout}
+                >
+                    Delete
+                </button>
+            </div>
+            <ModalComponent visible={isModalVisible} onClose={() => setModalVisible(false)}>
+                <h2 className="text-2xl font-semibold mb-4">Add new exercise</h2>
+                <label className="font-medium">Name</label>
+                <input
+                    className="w-full p-3 border border-gray-300 rounded mb-2"
+                    placeholder="Name"
+                    value={exerciseName}
+                    onChange={(e) => handleExerciseNameChange(e.target.value)}
+                />
+                {suggestions.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded max-h-40 overflow-y-auto mt-2">
+                        {suggestions.map((s, i) => (
+                            <div
+                                key={i}
+                                className="p-2 border-b last:border-b-0 cursor-pointer"
+                                onClick={() => selectSuggestion(s)}
+                            >
+                                {s}
+                            </div>
+                        ))}
+                    </div>
+                )}
+                <label className="font-medium mt-4">Type</label>
+                <div className="flex gap-2 mb-2">
+                    {["WEIGHTS", "BODYWEIGHT", "DURATION"].map((type) => (
+                        <button
+                            key={type}
+                            type="button"
+                            className={`flex-1 border rounded p-2 ${exerciseType === type ? "bg-gray-200" : ""}`}
+                            onClick={() => setExerciseType(type)}
+                        >
+                            {type}
+                        </button>
+                    ))}
+                </div>
+                {exerciseType !== "DURATION" && (
+                    <>
+                        <label className="font-medium mt-4">Goal</label>
+                        <div className="flex gap-2 mb-2">
+                            {["POWER", "MUSCLE", "ENDURANCE"].map((goal) => (
+                                <button
+                                    key={goal}
+                                    type="button"
+                                    className={`flex-1 border rounded p-2 ${exerciseGoal === goal ? "bg-gray-200" : ""}`}
+                                    onClick={() => setExerciseGoal(goal)}
+                                >
+                                    {goal}
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
+                <div className="text-red-600 mt-2">{error}</div>
+                <div className="flex gap-4 mt-6">
+                    <button
+                        type="button"
+                        className="flex-1 border border-gray-300 rounded p-3"
+                        onClick={() => {
+                            setExerciseName("");
+                            setModalVisible(false);
+                        }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        className="flex-1 border border-gray-300 rounded p-3"
+                        onClick={createExercise}
+                    >
+                        Create
+                    </button>
+                </div>
+            </ModalComponent>
+        </form>
+    );
+};
+
+export default EditWorkoutForm;
