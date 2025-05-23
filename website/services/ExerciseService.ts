@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { Exercise } from "@/types";
 
 export class ExerciseService {
     private axiosInstance: AxiosInstance;
